@@ -3,6 +3,7 @@ using ConditionalLogic;
 using ConditionalLogic.Comparison;
 using ConditionalLogic.Gates;
 using DynamicExpresso;
+using Jurassic;
 using MoonSharp.Interpreter;
 
 namespace Benchmark;
@@ -48,7 +49,7 @@ public class LogicGatesBenchmark
     private string _luaScript2 = @"function Eval(a,b,c)
     return a==b and b==c
 end";
-    private Script _script2;
+    private Script _luaScript;
 
     // Dynamic Espresso
     private static Interpreter _espressoInterpreter = new Interpreter();
@@ -58,16 +59,24 @@ end";
     private static string _expression = "A == B && B == C";
     private Lambda _parsedExpression;
     
+    // Jurassic
+    private ScriptEngine _jsScriptEngine;
+
     [GlobalSetup]
     public void Setup()
     {
-        _script2 = new Script();
-        _script2.DoString(_luaScript2);
+        _luaScript = new Script();
+        _luaScript.DoString(_luaScript2);
 
         _paramA = new Parameter("A", A);
         _paramB = new Parameter("B", B);
         _paramC = new Parameter("C", C);
         _parsedExpression = _espressoInterpreter.Parse(_expression, _paramA, _paramB, _paramC);
+
+        _jsScriptEngine = new ScriptEngine();
+        _jsScriptEngine.Evaluate(@"function Eval(a,b,c){
+    return a == b && b == c;
+}");
     }
 
     [Benchmark]
@@ -97,7 +106,7 @@ end";
     [Benchmark]
     public bool MoonSharp()
     {
-        var scriptResult = _script2.Call(_script2.Globals["Eval"], A, B, C);
+        var scriptResult = _luaScript.Call(_luaScript.Globals["Eval"], A, B, C);
         return scriptResult.Boolean;
     }
     
@@ -105,5 +114,11 @@ end";
     public bool DynamicEspressoParsed()
     {
         return (bool)_parsedExpression.Invoke(_paramA, _paramB, _paramC);
+    }
+
+    [Benchmark]
+    public bool Jurassic()
+    {
+        return _jsScriptEngine.CallGlobalFunction<bool>("Eval", A, B, C);
     }
 }
