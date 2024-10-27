@@ -9,6 +9,8 @@
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
+    <PackageReference Include="DynamicExpresso.Core" Version="2.16.1" />
+    <PackageReference Include="MoonSharp" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>

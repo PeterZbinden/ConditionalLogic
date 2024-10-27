@@ -6,4 +6,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Serialize.Linq" Version="3.1.160" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Serializer\" />
+  </ItemGroup>
+
 </Project>

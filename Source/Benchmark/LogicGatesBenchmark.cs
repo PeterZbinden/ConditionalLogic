@@ -2,6 +2,8 @@
 using ConditionalLogic;
 using ConditionalLogic.Comparison;
 using ConditionalLogic.Gates;
+using DynamicExpresso;
+using MoonSharp.Interpreter;
 
 namespace Benchmark;
 
@@ -23,10 +25,9 @@ public class AndAccessor : And
         return GetAndList(rules);
     }
 }
-
+[MemoryDiagnoser]
 public class LogicGatesBenchmark
 {
-    public int Count { get; set; } = 1000;
     private const int A = 5;
     private const int B = 8;
     private const int C = 999;
@@ -34,71 +35,75 @@ public class LogicGatesBenchmark
     private readonly ExpressionBase<int> _andGate = AndAccessor.AndList(
         new List<ExpressionBase<int>>
         {
-            new EqualsStaticValue<int,int>(x => x, A), 
+            new EqualsStaticValue<int,int>(x => x, A),
             new EqualsStaticValue<int,int>(x=>x, B)
         });
-    private readonly ExpressionBase<int> _and2Gate = AndAccessor.And2(new EqualsStaticValue<int,int>(x => x, A), new EqualsStaticValue<int,int>(x=>x, B));
-    
+    private readonly ExpressionBase<int> _and2Gate = AndAccessor.And2(new EqualsStaticValue<int, int>(x => x, A), new EqualsStaticValue<int, int>(x => x, B));
+
     private EqualsStaticValue<int, int> a = new EqualsStaticValue<int, int>(x => x, A);
     private EqualsStaticValue<int, int> b = new EqualsStaticValue<int, int>(x => x, B);
+
+    // Moonscript
+    private string _luaScript1 = "return A==B and B==C";
+    private string _luaScript2 = @"function Eval(a,b,c)
+    return a==b and b==c
+end";
+    private Script _script2;
+
+    // Dynamic Espresso
+    private static Interpreter _espressoInterpreter = new Interpreter();
+    private Parameter _paramA;
+    private Parameter _paramB;
+    private Parameter _paramC;
+    private static string _expression = "A == B && B == C";
+    private Lambda _parsedExpression;
+    
+    [GlobalSetup]
+    public void Setup()
+    {
+        _script2 = new Script();
+        _script2.DoString(_luaScript2);
+
+        _paramA = new Parameter("A", A);
+        _paramB = new Parameter("B", B);
+        _paramC = new Parameter("C", C);
+        _parsedExpression = _espressoInterpreter.Parse(_expression, _paramA, _paramB, _paramC);
+    }
 
     [Benchmark]
     public bool SimpleEquals()
     {
-        var result = true;
-        for (int i = 0; i < Count; i++)
-        {
-            result &= a.Evaluate(C) && b.Evaluate(C);
-        }
-
-        return result;
+        return a.Evaluate(C) && b.Evaluate(C);
     }
 
     [Benchmark]
     public bool AndListGate()
     {
-        var result = true;
-        for (int i = 0; i < Count; i++)
-        {
-            result &= _andGate.Evaluate(C);
-        }
-
-        return result;
+        return _andGate.Evaluate(C);
     }
 
     [Benchmark]
     public bool And2Gate()
     {
-        var result = true;
-        for (int i = 0; i < Count; i++)
-        {
-            result &= _and2Gate.Evaluate(C);
-        }
-
-        return result;
-    }
-
-    //[Benchmark]
-    public void OrGate()
-    {
-
+        return _and2Gate.Evaluate(C);
     }
 
     [Benchmark]
     public bool NativeAnd()
     {
-        var result = true;
-        for (int i = 0; i < Count; i++)
-        {
-            result &= (A == C && B == C);
-        }
-
-        return result;
+        return (A == C && B == C);
     }
 
-    //[Benchmark]
-    public void NativeOr()
+    [Benchmark]
+    public bool MoonSharp()
     {
-
+        var scriptResult = _script2.Call(_script2.Globals["Eval"], A, B, C);
+        return scriptResult.Boolean;
+    }
+    
+    [Benchmark]
+    public bool DynamicEspressoParsed()
+    {
+        return (bool)_parsedExpression.Invoke(_paramA, _paramB, _paramC);
     }
 }

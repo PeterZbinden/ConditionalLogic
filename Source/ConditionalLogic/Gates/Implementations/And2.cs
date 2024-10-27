@@ -2,8 +2,8 @@
 
 internal class And2<TEvaluationArgs> : ExpressionBase<TEvaluationArgs>
 {
-    private readonly ExpressionBase<TEvaluationArgs> _value1;
-    private readonly ExpressionBase<TEvaluationArgs> _value2;
+    public ExpressionBase<TEvaluationArgs> Value1 { get; init; }
+    public ExpressionBase<TEvaluationArgs> Value2 { get; init; }
 
     public And2()
     {
@@ -12,13 +12,13 @@ internal class And2<TEvaluationArgs> : ExpressionBase<TEvaluationArgs>
 
     public And2(ExpressionBase<TEvaluationArgs> value1, ExpressionBase<TEvaluationArgs> value2)
     {
-        _value1 = value1;
-        _value2 = value2;
+        Value1 = value1;
+        Value2 = value2;
     }
 
     public override bool Evaluate(TEvaluationArgs args)
     {
-        return _value1.Evaluate(args) 
-               && _value2.Evaluate(args);
+        return Value1.Evaluate(args) 
+               && Value2.Evaluate(args);
     }
 }
